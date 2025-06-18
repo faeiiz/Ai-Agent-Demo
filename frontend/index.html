@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clothing Suggestion Agent</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    input, button { margin: 0.5rem 0; padding: 0.5rem; }
+    #rating-section { display: none; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Clothing Suggestion Agent</h1>
+  <form id="inputForm">
+    <input type="text" id="height" placeholder="Height (e.g. 5'9")" required /><br />
+    <input type="text" id="location" placeholder="Location (e.g. Berlin)" required /><br />
+    <input type="text" id="occasion" placeholder="Occasion (e.g. Wedding)" required /><br />
+    <button type="submit">Get Suggestion</button>
+  </form>
+
+  <div id="result-section">
+    <p id="result"></p>
+  </div>
+
+  <div id="rating-section">
+    <label for="rating">Rate this suggestion (1-10):</label><br />
+    <input type="number" id="rating" min="1" max="10" /><br />
+    <button id="rateBtn">Submit Rating</button>
+  </div>
+
+  <script>
+    const form = document.getElementById('inputForm');
+    const resultEl = document.getElementById('result');
+    const ratingSection = document.getElementById('rating-section');
+    const ratingInput = document.getElementById('rating');
+    const rateBtn = document.getElementById('rateBtn');
+    let lastData = {};
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      // Gather inputs
+      const height = document.getElementById('height').value;
+      const location = document.getElementById('location').value;
+      const occasion = document.getElementById('occasion').value;
+
+      lastData = { height, location, occasion, rating: 0 };
+
+      const response = await fetch('/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lastData)
+      });
+      const data = await response.json();
+      resultEl.innerText = data.suggestion;
+
+      // Show rating section
+      ratingSection.style.display = 'block';
+    });
+
+    rateBtn.addEventListener('click', async () => {
+      const rating = parseInt(ratingInput.value, 10);
+      if (!rating || rating < 1 || rating > 10) {
+        alert('Please enter a rating between 1 and 10.');
+        return;
+      }
+      lastData.rating = rating;
+
+      const response = await fetch('/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lastData)
+      });
+      const data = await response.json();
+      resultEl.innerText = data.suggestion;
+
+      if (rating >= 8) {
+        alert('Great! Glad you liked it.');
+      } else {
+        // Keep rating section visible for another attempt
+        alert('Let me try another suggestion.');
+      }
+    });
+  </script>
+</body>
+</html>
